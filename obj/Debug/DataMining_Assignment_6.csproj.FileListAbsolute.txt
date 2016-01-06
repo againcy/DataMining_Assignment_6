@@ -1,0 +1,6 @@
+c:\users\liuyibin\documents\visual studio 2015\Projects\DataMining_Assignment_6\DataMining_Assignment_6\bin\Debug\DataMining_Assignment_6.exe.config
+c:\users\liuyibin\documents\visual studio 2015\Projects\DataMining_Assignment_6\DataMining_Assignment_6\obj\Debug\DataMining_Assignment_6.csprojResolveAssemblyReference.cache
+c:\users\liuyibin\documents\visual studio 2015\Projects\DataMining_Assignment_6\DataMining_Assignment_6\bin\Debug\DataMining_Assignment_6.exe
+c:\users\liuyibin\documents\visual studio 2015\Projects\DataMining_Assignment_6\DataMining_Assignment_6\bin\Debug\DataMining_Assignment_6.pdb
+c:\users\liuyibin\documents\visual studio 2015\Projects\DataMining_Assignment_6\DataMining_Assignment_6\obj\Debug\DataMining_Assignment_6.exe
+c:\users\liuyibin\documents\visual studio 2015\Projects\DataMining_Assignment_6\DataMining_Assignment_6\obj\Debug\DataMining_Assignment_6.pdb
