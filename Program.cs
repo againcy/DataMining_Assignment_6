@@ -38,8 +38,13 @@ namespace DataMining_Assignment_6
             }
             sw.Close();
         }
-            
-        static void RandomForest(int repeatTime)
+        
+        /// <summary>
+        /// 随机森林
+        /// </summary>
+        /// <param name="repeatTime">森林重复次数</param>
+        /// <param name="n">每个森林的决策树个数</param>
+        static void RandomForest(int repeatTime, int n)
         {
             for (int repeat = 0; repeat < repeatTime; repeat++)
             {
@@ -59,6 +64,9 @@ namespace DataMining_Assignment_6
             }
         }
 
+        /// <summary>
+        /// 汇总结果
+        /// </summary>
         static void CountResult()
         {
             string dirName = @"G:\Data Mining\Assignment_6\";
@@ -106,7 +114,7 @@ namespace DataMining_Assignment_6
         static void Main(string[] args)
         {
             Input();
-            RandomForest(1);
+            RandomForest(100,10);
             //Test();
             Console.WriteLine("Over");
             Console.ReadLine();
