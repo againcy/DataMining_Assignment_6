@@ -185,7 +185,7 @@ namespace DataMining_Assignment_6
         {
             SetFeatureType();
             RecordDiscreteFeature();
-            GetIGR();
+           // GetIGR();
         }
 
         /// <summary>

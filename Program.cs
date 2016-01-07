@@ -39,28 +39,74 @@ namespace DataMining_Assignment_6
             sw.Close();
         }
             
-        static void RandomForest()
+        static void RandomForest(int repeatTime)
         {
-            RandomForest forest = new RandomForest(train);
-            forest.GenerateForest(50, 9);
-            StreamWriter sw =new StreamWriter("result.csv");
-            foreach(var ex in test.Examples)
+            for (int repeat = 0; repeat < repeatTime; repeat++)
             {
-                sw.Write(ex.id.ToString() + ",");
-                List<int> usedF;
-                int label = forest.Test(ex,out usedF) + 1;
-                sw.WriteLine(label.ToString());
-                /*
-                foreach (var f in usedF) sw.Write(f.ToString() + ",");
-                sw.WriteLine(ex.label.ToString());
-                */
+                string dirName = @"G:\Data Mining\Assignment_6\" + System.DateTime.Now.Date.ToLongDateString();
+                if (Directory.Exists(dirName) == false) Directory.CreateDirectory(dirName);
+                string fileName = dirName + @"\" + System.DateTime.Now.ToLongTimeString().Replace(":","_");
+                StreamWriter sw = new StreamWriter(fileName+".txt");
+                RandomForest forest = new RandomForest(train);
+                forest.GenerateForest(3, 10, true);
+                foreach (var ex in test.Examples)
+                {
+                    string detail;
+                    int label = forest.Test(ex, out detail) + 1;
+                    sw.WriteLine(detail);
+                }
+                sw.Close();
             }
-            sw.Close();
+        }
+
+        static void CountResult()
+        {
+            string dirName = @"G:\Data Mining\Assignment_6\";
+            //election[x][i]=j 表示第x个数据被分到i类一共j次
+            Dictionary<int, Dictionary<int, int>> election = new Dictionary<int, Dictionary<int, int>>();
+
+            foreach (var file in Directory.GetFiles(dirName, "*.txt", SearchOption.AllDirectories))
+            {
+                StreamReader sr = new StreamReader(file);
+                string line;
+                while ((line = sr.ReadLine())!=null)
+                {
+                    var data = line.Split(',').Select<string, int>(x => Convert.ToInt32(x)).ToArray();
+                    if (election.ContainsKey(data[0]) == false)
+                    {
+                        election.Add(data[0], new Dictionary<int, int>());
+                        for (int i = 1; i <= DecisionTree.MaxLabel; i++) election[data[0]].Add(i, 0);
+                    }
+                    for (int i = 1; i < data.Length; i++)
+                    {
+                        election[data[0]][data[i]]++;
+                    }
+                }
+                sr.Close();
+            }
+            //输出结果
+            StreamWriter sw = new StreamWriter(dirName + @"result.csv");
+            sw.WriteLine("Id,Response");
+            foreach(var id in election.Keys)
+            {
+                //选取最多投票的类
+                int max = 0;
+                int label = 1;
+                for(int i=1;i<=DecisionTree.MaxLabel;i++)
+                {
+                    if (election[id][i]>max)
+                    {
+                        max = election[id][i];
+                        label = i;
+                    }
+                }
+                sw.WriteLine(id.ToString() + "," + label.ToString());
+            }
         }
         static void Main(string[] args)
         {
             Input();
-            RandomForest();
+            RandomForest(1);
             //Test();
             Console.WriteLine("Over");
             Console.ReadLine();

@@ -10,29 +10,63 @@ namespace DataMining_Assignment_6
     {
         private List<DecisionTree> forest;
         private DataSet dataset;
+        private Dictionary<int, DataSet> dataset_label;//按类标存储的数据集
         private Random rand;
         public RandomForest(DataSet ds)
         {
             dataset = ds;
             forest = new List<DecisionTree>();
             rand = new Random();
+            dataset_label = null;
+            
         }
         private int MaxLabel;
 
         /// <summary>
-        /// 生成随机森林，共n棵决策树，每次采样k个特征
+        /// 将数据集按类标存放
         /// </summary>
-        /// <param name="n">决策树的个数</param>
-        /// <param name="k">每次采样的特征数</param>
-        public void GenerateForest(int n, int k)
+        private void Generate_dataset_label()
         {
-            int progress = 10;
-            Console.WriteLine(System.DateTime.Now.ToLongTimeString() + " RF Start...");
-            for (int i = 0; i < n; i++)
+            dataset_label = new Dictionary<int, DataSet>();
+            foreach (var ex in dataset.Examples)
             {
-                DataSet newSet = new DataSet();
-                newSet.FeatureType = dataset.FeatureType;
-                //对训练集的行进行随机采样
+                int l = ex.label;
+                if (dataset_label.ContainsKey(l) == false)
+                {
+                    dataset_label.Add(l, new DataSet());
+                }
+                dataset_label[l].AddExample(ex);
+            }
+        }
+        /// <summary>
+        /// 对训练集的行进行随机采样
+        /// </summary>
+        /// <param name="uniform">是否按照类标均匀采样</param>
+        /// <returns>采样后的训练集</returns>
+        private DataSet SampleExample(bool uniform)
+        {
+            //对训练集的行进行随机采样
+            DataSet newSet = new DataSet();
+            newSet.FeatureType = dataset.FeatureType;
+
+            if (uniform == true)
+            {
+                if (dataset_label == null) Generate_dataset_label();
+                int NperClass = dataset.Examples.Count / MaxLabel;
+                //按类标均匀采样，每个类包含的数据量相等
+                for (int i = 0; i < MaxLabel; i++)
+                {
+                    var arrEx = dataset_label[i].Examples.ToArray();
+                    for (int j = 0; j < NperClass; j++)
+                    {
+                        //有放回随机
+                        newSet.AddExample(arrEx[rand.Next() % arrEx.Length]);
+                    }
+                }
+            }
+            else
+            {
+                //随机采样
                 int N = dataset.Examples.Count;
                 var arrEx = dataset.Examples.ToArray();
                 for (int j = 0; j < N; j++)
@@ -41,27 +75,59 @@ namespace DataMining_Assignment_6
                     newSet.AddExample(arrEx[rand.Next() % N]);
                 }
                 newSet.RecordDiscreteFeature();
-                DecisionTree tree = new DecisionTree(newSet);
-                MaxLabel = DecisionTree.MaxLabel;
+            }
+            return newSet;
+        }
 
-                //对训练集的列进行随机采样（特征采样）
-                int cntFeature = dataset.FeatureType.Length;
-                Split newSplit = new Split(cntFeature);
-                List<int> check = new List<int>();
-                //随机选取=k个特征
-                for (int j = 0; j < k; j++)
-                {
-                    int f = rand.Next() % cntFeature;
-                    while (check.Contains(f)==true || dataset.FeatureIGR[f]<0.01) f = rand.Next() % cntFeature;//无放回随机
-                    check.Add(f);
-                }
-                for(int j = 0;j<cntFeature;j++)
-                {
-                    if (check.Contains(j)==false) newSplit.splitOption[j] = 3;
-                }
+        /// <summary>
+        /// 对训练集列进行随机采样（特征采样）
+        /// </summary>
+        /// <param name="cntFeature">特征数</param>
+        /// <param name="k">采样特征数</param>
+        /// <returns></returns>
+        private Split SampleFeature(int cntFeature, int k)
+        {
+            Split newSplit = new Split(cntFeature);
+            List<int> check = new List<int>();
+            //随机选取=k个特征
+            for (int j = 0; j < k; j++)
+            {
+                int f = rand.Next() % cntFeature;
+               // while (check.Contains(f) == true || dataset.FeatureIGR[f] < 0.01) f = rand.Next() % cntFeature;//无放回随机
+                while (check.Contains(f) == true) f = rand.Next() % cntFeature;//无放回随机
+                check.Add(f);
+            }
+            for (int j = 0; j < cntFeature; j++)
+            {
+                if (check.Contains(j) == false) newSplit.splitOption[j] = 3;
+            }
+            return newSplit;
+        }
+
+        /// <summary>
+        /// 生成随机森林，共n棵决策树，每次采样k个特征
+        /// </summary>
+        /// <param name="n">决策树的个数</param>
+        /// <param name="k">每次采样的特征数</param>
+        /// <param name="uniformSample">是否保证每个类采样后数据量相同</param>
+        public void GenerateForest(int n, int k, bool uniformSample)
+        {
+            int progress = 10;
+            Console.WriteLine(System.DateTime.Now.ToLongTimeString() + " RF Start...");
+            MaxLabel = DecisionTree.MaxLabel;
+            for (int i = 0; i < n; i++)
+            {
+                //行采样
+                DataSet newSet = SampleExample(uniformSample);
+                //列采样
+                Split newSplit = SampleFeature(dataset.FeatureType.Length, k);
+                //生成决策树
+                DecisionTree tree = new DecisionTree(newSet);
                 tree.Root.split = new Split(newSplit);
                 tree.GenerateSplit(tree.Root, 0);
+                //加入森林
                 forest.Add(tree);
+                //汇报进度
                 if (i>n*(double)(progress)/100.0)
                 {
                     Console.WriteLine(System.DateTime.Now.ToLongTimeString() + "  " + progress + "%");
@@ -75,24 +141,17 @@ namespace DataMining_Assignment_6
         /// 对data做测试
         /// </summary>
         /// <param name="data">测试数据</param>
-        /// <param name="usedFeatures">使用的特征</param>
+        /// <param name="detailResult">结果细节，包含每棵树的预测结果</param>
         /// <returns>可能性最大的类</returns>
-        public int Test(Example data, out List<int> usedFeatures)
+        public int Test(Example data, out string detailResult)
         {
-            var usedFeatures_dict = new Dictionary<int,List<int>>();
+            detailResult = data.id.ToString();
             int[] label = new int[MaxLabel];
-            for (int i = 0; i < MaxLabel; i++)
-            {
-                usedFeatures_dict.Add(i, new List<int>());
-            }
-            
-            label.Initialize();
             foreach (var tree in forest)
             {
-                List<int> usedF;
-                int l = tree.Test(data, out usedF);
+                int l = tree.Test(data);
+                detailResult += "," + (l + 1).ToString();
                 label[l]++;
-                foreach (var f in usedF) if (usedFeatures_dict[l].Contains(f) == false) usedFeatures_dict[l].Add(f);
             }
             int max = label[0];
             int result = 0; 
@@ -104,7 +163,6 @@ namespace DataMining_Assignment_6
                     result = i;
                 }
             }
-            usedFeatures = usedFeatures_dict[data.label];
             return result;
         }
 

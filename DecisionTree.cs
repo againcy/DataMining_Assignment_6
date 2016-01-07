@@ -520,18 +520,15 @@ namespace DataMining_Assignment_6
         /// 对data做测试
         /// </summary>
         /// <param name="data">测试数据</param>
-        /// <param name="usedFeatures">被使用的特征</param>
         /// <returns>类标</returns>
-        public int Test(Example data,out List<int> usedFeatures)
+        public int Test(Example data)
         {
-            usedFeatures = new List<int>();
             DecisionTreeNode cur = root;
             int defaultLabel=root.defaultLabel;
             while (cur!=null && cur.checkFlag == -1)
             {
                 defaultLabel = cur.defaultLabel;
                 int sf = cur.curSplitCriteria.splitFeature;
-                usedFeatures.Add(sf);
                 if (dataset.FeatureType[sf]==0)
                 {
                     //连续
