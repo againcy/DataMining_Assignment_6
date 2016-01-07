@@ -51,9 +51,12 @@ namespace DataMining_Assignment_6
                 string dirName = @"G:\Data Mining\Assignment_6\" + System.DateTime.Now.Date.ToLongDateString();
                 if (Directory.Exists(dirName) == false) Directory.CreateDirectory(dirName);
                 string fileName = dirName + @"\" + System.DateTime.Now.ToLongTimeString().Replace(":","_");
-                StreamWriter sw = new StreamWriter(fileName+".txt");
+                bool uniform;
+                if (repeat < repeatTime * 8 / 10) uniform = true;
+                else uniform = false;
+                StreamWriter sw = new StreamWriter(fileName + "_" + uniform.ToString() + ".txt");
                 RandomForest forest = new RandomForest(train);
-                forest.GenerateForest(3, 10, true);
+                forest.GenerateForest(n, 10, uniform);
                 foreach (var ex in test.Examples)
                 {
                     string detail;
@@ -67,13 +70,15 @@ namespace DataMining_Assignment_6
         /// <summary>
         /// 汇总结果
         /// </summary>
-        static void CountResult()
+        static void CountResult(bool uniform)
         {
             string dirName = @"G:\Data Mining\Assignment_6\";
             //election[x][i]=j 表示第x个数据被分到i类一共j次
             Dictionary<int, Dictionary<int, int>> election = new Dictionary<int, Dictionary<int, int>>();
-
-            foreach (var file in Directory.GetFiles(dirName, "*.txt", SearchOption.AllDirectories))
+            string pattern;
+            if (uniform == true) pattern = "*_True.txt";
+            else pattern = "*_False.txt";
+            foreach (var file in Directory.GetFiles(dirName, pattern, SearchOption.AllDirectories))
             {
                 StreamReader sr = new StreamReader(file);
                 string line;
@@ -114,7 +119,8 @@ namespace DataMining_Assignment_6
         static void Main(string[] args)
         {
             Input();
-            RandomForest(100,10);
+            RandomForest(2,2);
+            //CountResult(true);
             //Test();
             Console.WriteLine("Over");
             Console.ReadLine();
